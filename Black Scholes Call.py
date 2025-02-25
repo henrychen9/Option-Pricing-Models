@@ -10,3 +10,5 @@ def black_scholes_call(S, K, T, t, r, sigma):
 
     C = S * norm.cdf(d1) - K * np.exp(-r * (T - t)) * norm.cdf(d2)
     return C
+
+
