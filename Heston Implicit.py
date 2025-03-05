@@ -8,7 +8,6 @@ from scipy.sparse.linalg import spsolve
 S_max, V_max, T, r = 200, 5.0, 1.0, 0.05
 kappa, theta, sigma, rho = 2.0, 0.04, 0.3, -0.7
 K, N, M, L = 100, 40, 40, 100
-c1, c2, c3, c4 = 10000, 100, 4, 5
 
 # discretization
 ds, dv, dt = S_max / N, V_max / M, T / L
@@ -87,15 +86,6 @@ for l in range(L-1, -1, -1):
 
     V_grid[:, :, l] = V_sol.reshape((N+1, M+1))
     print(f"time step {l} processed.")
-
-# print results for specific (s, v) values
-print("option price at s=200, v=0.1:", V_grid[N, M//10, 0])
-print("option price at s=200, v=0.5:", V_grid[N, M//2, 0])
-print("option price at s=200, v=0.9:", V_grid[N, int(0.9 * M), 0])
-print("option price at s=150, v=0.1:", V_grid[N//4*3, M//10, 0])
-print("option price at s=150, v=0.5:", V_grid[N//4*3, M//2, 0])
-print("option price at s=150, v=0.9:", V_grid[N//4*3, M, 0])
-print(V_grid[:, M, 0])
 
 
 option_price = V_grid[:, :, 0]
