@@ -5,9 +5,9 @@ import os
 os.system('cls')
 
 # parameters
-S_max, V_max, T, r = 200, 1.0, 1.0, 0.05
+S_max, V_max, T, r = 100, 1.0, 1.0, 0.05
 kappa, theta, sigma, rho = 2.0, 0.04, 0.3, -0.7
-K, N, M, L = 100, 100, 100, 100
+K, N, M, L = 50, 100, 100, 100
 
 # discretization
 ds, dv, dt = S_max / N, V_max / M, T / L
