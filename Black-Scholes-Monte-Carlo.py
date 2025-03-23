@@ -39,46 +39,6 @@ class MonteCarloSimulator:
                 S_t *= np.exp(drift + diffusion)
             self.final_prices = S_t
 
-    
-    def price_american_option(self, K, option_type="call"):
-        # price american option using least-squares monte carlo
-        if self.paths is None:
-            raise ValueError("run simulate() before pricing an option")
-
-        discount_factor = np.exp(-self.r * self.dt)
-        payoffs = np.zeros_like(self.paths)  # option value at each time
-
-        # final payoffs at maturity
-        if option_type == "call":
-            payoffs[:, -1] = np.maximum(self.paths[:, -1] - K, 0)
-        elif option_type == "put":
-            payoffs[:, -1] = np.maximum(K - self.paths[:, -1], 0)
-        else:
-            raise ValueError("invalid option type")
-
-        for t in range(self.n - 1, 0, -1):
-            in_money = payoffs[:, t] > 0  # eligible for early exercise
-
-            if np.any(in_money):
-                X = self.paths[in_money, t].reshape(-1, 1)  # spot prices
-                Y = payoffs[in_money, t+1] * discount_factor  # discounted future payoff
-
-                model = LinearRegression()
-                model.fit(X, Y)  # fit continuation value
-                continuation_value = model.predict(X)
-
-                if option_type == "call":
-                    immediate_exercise = np.maximum(self.paths[in_money, t] - K, 0)
-                else:
-                    immediate_exercise = np.maximum(K - self.paths[in_money, t], 0)
-
-                exercise = immediate_exercise > continuation_value
-                payoffs[in_money, t] = np.where(exercise, immediate_exercise,
-                                                payoffs[in_money, t+1] * discount_factor)
-
-        option_price = np.mean(payoffs[:, 1] * discount_factor)
-        return option_price
-
     def expected_value_comparison(self):
         # compare simulated expected value to theoretical
         if self.final_prices is None:
@@ -113,7 +73,3 @@ simulator = MonteCarloSimulator(S0=100, T=1, n=252, r=0.05, sigma=0.2, M=10000, 
 simulator.simulate()
 simulator.plot_paths()
 simulator.expected_value_comparison()
-call_price = simulator.price_american_option(K=100, option_type="call")
-put_price = simulator.price_american_option(K=100, option_type="put")
-print(f"american call option price: {call_price:.4f}")
-print(f"american put option price: {put_price:.4f}")
