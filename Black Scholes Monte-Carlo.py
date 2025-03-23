@@ -16,8 +16,8 @@ class MonteCarloSimulator:
         self.paths = None
         self.final_prices = None
 
-    # simulate stock price paths using gbm
     def simulate(self):
+        # simulate stock price paths using gbm
         Z = np.random.randn(self.M, self.n)  # standard normal shocks
 
         if self.is_store_paths:
@@ -39,8 +39,9 @@ class MonteCarloSimulator:
                 S_t *= np.exp(drift + diffusion)
             self.final_prices = S_t
 
-    # price american option using least-squares monte carlo
+    
     def price_american_option(self, K, option_type="call"):
+        # price american option using least-squares monte carlo
         if self.paths is None:
             raise ValueError("run simulate() before pricing an option")
 
@@ -78,8 +79,8 @@ class MonteCarloSimulator:
         option_price = np.mean(payoffs[:, 1] * discount_factor)
         return option_price
 
-    # compare simulated expected value to theoretical
     def expected_value_comparison(self):
+        # compare simulated expected value to theoretical
         if self.final_prices is None:
             raise ValueError("run simulate() before computing expectations")
 
@@ -90,8 +91,8 @@ class MonteCarloSimulator:
         print(f"theoretical E[S_T]: {theoretical_mean:.4f}")
         print(f"percent error: {100 * abs(empirical_mean - theoretical_mean) / theoretical_mean:.4f}%")
 
-    # plot a subset of simulated stock price paths
     def plot_paths(self, num_paths=10):
+        # plot a subset of simulated stock price paths
         if not self.is_store_paths or self.paths is None:
             raise ValueError("run simulate() with is_store_paths=True before plotting")
 
