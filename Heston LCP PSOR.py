@@ -32,7 +32,7 @@ def psor_solver(A, b, payoff, x, omega_init, tol, max_iter):
         # compute error
         error = np.linalg.norm(x - x_old, ord=np.inf)
         
-        # update omega adaptively:
+        # update omega adaptively
         if prev_error is not None:
             ratio = error / prev_error
             if ratio > 0.95:
@@ -141,10 +141,9 @@ def prolong(coarse):
     return np.repeat(np.repeat(coarse, 2, axis=0), 2, axis=1)
 
 
-# Define mg_psor_solver to handle multigrid PSOR with the existing PSOR solver.
 def mg_psor_solver(A, b, payoff, x, omega, tol, max_iter, num_pre, num_post,
                    S_grid, v_grid, ds, dv, dt, r, kappa, theta, sigma, rho, Ns, Nv):
-    # one multigrid V-cycle with pre/post smoothing
+    # handle multigrid PSOR with the existing PSOR solver
     x = psor_solver(A, b, payoff, x, omega, tol, num_pre)
     r_vec = b - A.dot(x)
     
@@ -186,7 +185,6 @@ def mg_psor_solver(A, b, payoff, x, omega, tol, max_iter, num_pre, num_post,
     x = psor_solver(A, b, payoff, x, omega, tol, num_post)
     return x
 
-# Define heston_american_fd to call the mg_psor_solver
 def heston_american_fd(r, kappa, theta, sigma, rho, T, K, S_max, v_max, Ns, Nv, Nt,
                          omega=1.6, tol=1e-3, max_iter=500, use_multigrid=True, print_interval=10):
     # solve American call under Heston using FD + PSOR + MG

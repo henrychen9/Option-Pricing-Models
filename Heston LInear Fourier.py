@@ -3,7 +3,6 @@ from scipy.integrate import quad
 
 def heston_charfun(u, S0, v0, T, r, kappa, theta, sigma, rho, j):
     # computes the characteristic function under the Heston model
-
     i = 1j
     x = np.log(S0)
 

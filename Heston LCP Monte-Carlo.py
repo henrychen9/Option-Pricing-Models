@@ -17,7 +17,7 @@ def simulate_heston_paths(S0, v0, r, kappa, theta, sigma, rho, T, n_steps, n_pat
     for t in range(1, n_steps + 1):
         Z1 = np.random.normal(size=n_paths)
         Z2 = np.random.normal(size=n_paths)
-        # generate correlated Brownian motions
+        # generate correlated brownian motions
         dW_S = np.sqrt(dt) * Z1
         dW_v = np.sqrt(dt) * (rho * Z1 + np.sqrt(1 - rho**2) * Z2)
         
@@ -114,7 +114,7 @@ for i, S0 in enumerate(S_grid):
 
 print("monte carlo simulation complete.")
 
-# plot 3d price surface
+# plot 3D price surface
 S_mesh, v_mesh = np.meshgrid(S_grid, v_grid, indexing='ij')
 fig = plt.figure(figsize=(10, 7))
 ax = fig.add_subplot(111, projection='3d')

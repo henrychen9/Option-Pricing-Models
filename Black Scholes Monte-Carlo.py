@@ -48,7 +48,7 @@ class MonteCarloSimulator:
         discount_factor = np.exp(-self.r * self.dt)
         payoffs = np.zeros_like(self.paths)  # option value at each time
 
-        # set final payoffs at maturity
+        # final payoffs at maturity
         if option_type == "call":
             payoffs[:, -1] = np.maximum(self.paths[:, -1] - K, 0)
         elif option_type == "put":

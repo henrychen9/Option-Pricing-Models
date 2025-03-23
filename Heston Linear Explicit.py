@@ -3,8 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
-# solve Heston PDE using explicit finite difference method
 def heston_explicit_fd(r, kappa, theta, sigma, rho, T, K, S_max, v_max, Ns, Nv, Nt, print_interval=100):
+    # solve Heston PDE using explicit finite difference method
     ds = S_max / (Ns - 1)
     dv = v_max / (Nv - 1)
     dt = T / (Nt - 1)
