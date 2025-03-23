@@ -36,12 +36,9 @@ def psor_solver(A, b, payoff, x, omega_init, tol, max_iter):
         if prev_error is not None:
             ratio = error / prev_error
             if ratio > 0.95:
-                omega = max(1.0, omega * 0.95)
+                omega = max(1.0, omega * 0.9)
             elif ratio < 0.80:
-                omega = min(1.95, omega * 1.05)
-        
-        # Uncomment the following line to see the evolution of omega and error:
-        # print(f"Iteration {it}, error: {error:.2e}, omega: {omega:.3f}")
+                omega = min(1.95, omega * 1.1)
         
         if error < tol:
             break
@@ -143,6 +140,8 @@ def prolong(coarse):
     # prolong coarse to fine (2x2 duplication)
     return np.repeat(np.repeat(coarse, 2, axis=0), 2, axis=1)
 
+
+# Define mg_psor_solver to handle multigrid PSOR with the existing PSOR solver.
 def mg_psor_solver(A, b, payoff, x, omega, tol, max_iter, num_pre, num_post,
                    S_grid, v_grid, ds, dv, dt, r, kappa, theta, sigma, rho, Ns, Nv):
     # one multigrid V-cycle with pre/post smoothing
@@ -187,8 +186,9 @@ def mg_psor_solver(A, b, payoff, x, omega, tol, max_iter, num_pre, num_post,
     x = psor_solver(A, b, payoff, x, omega, tol, num_post)
     return x
 
+# Define heston_american_fd to call the mg_psor_solver
 def heston_american_fd(r, kappa, theta, sigma, rho, T, K, S_max, v_max, Ns, Nv, Nt,
-                         omega=1.5, tol=1e-6, max_iter=500, use_multigrid=True, print_interval=10):
+                         omega=1.6, tol=1e-3, max_iter=500, use_multigrid=True, print_interval=10):
     # solve American call under Heston using FD + PSOR + MG
     ds = S_max / (Ns - 1)
     dv = v_max / (Nv - 1)
@@ -203,8 +203,6 @@ def heston_american_fd(r, kappa, theta, sigma, rho, T, K, S_max, v_max, Ns, Nv, 
         V[i, :] = max(S_grid[i] - K, 0)
     
     total_steps = Nt - 1
-    sys.stdout.write("Starting time-stepping for American option...\n")
-    sys.stdout.flush()
     
     for n in range(total_steps, 0, -1):
         t = (n - 1) * dt
@@ -248,9 +246,6 @@ def heston_american_fd(r, kappa, theta, sigma, rho, T, K, S_max, v_max, Ns, Nv, 
         if (total_steps - n) % print_interval == 0:
             sys.stdout.write(f"Processed {total_steps - n} out of {total_steps} time steps\n")
             sys.stdout.flush()
-    
-    sys.stdout.write("Time-stepping complete for American option\n")
-    sys.stdout.flush()
     return S_grid, v_grid, V
 
 # params
