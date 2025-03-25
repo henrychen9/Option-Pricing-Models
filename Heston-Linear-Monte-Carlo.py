@@ -4,7 +4,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import RectBivariateSpline
 
 def monte_carlo_heston_option_price(K, T, r, kappa, theta, sigma, rho, N, M, dt, S_vals, V_vals):
-    # create grid of (S0, V0) values
+    # grid of initial (S, V) values
     S_grid, V_grid = np.meshgrid(S_vals, V_vals, indexing='ij')
     option_prices = np.zeros_like(S_grid)
 
@@ -20,7 +20,7 @@ def monte_carlo_heston_option_price(K, T, r, kappa, theta, sigma, rho, N, M, dt,
             dW_V = np.random.randn(M, N) * np.sqrt(dt)
             dW_S = rho * dW_V + np.sqrt(1 - rho**2) * np.random.randn(M, N) * np.sqrt(dt)
 
-            # initialize asset and variance paths
+            # initialize S and V arrays
             S = np.zeros((M, N + 1))
             V = np.zeros((M, N + 1))
             S[:, 0] = S0

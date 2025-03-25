@@ -7,14 +7,14 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import RectBivariateSpline
 
 def psor_solver(A, b, payoff, x, omega_init, tol, max_iter):
-    # solve LCP using projected SOR (x >= payoff)
+    # core PSOR loop (projected step)
     A_dense = A.toarray()
     N = len(x)
-    omega = omega_init
+    omega = omega_init  # adjusting omega later if needed
     prev_error = None
 
     for it in range(max_iter):
-        x_old = x.copy()
+        x_old = x.copy() # backup just in case
 
         # perform a PSOR iteration
         for i in range(N):
@@ -26,7 +26,7 @@ def psor_solver(A, b, payoff, x, omega_init, tol, max_iter):
                     sum_val += A_dense[i, j] * x_old[j]
             x_i_new = (b[i] - sum_val) / A_dense[i, i]
 
-            # relaxation and projection
+            # projection step to keep x above payoff
             x[i] = max(payoff[i], (1 - omega) * x_old[i] + omega * x_i_new)
         
         # compute error
@@ -49,7 +49,7 @@ def psor_solver(A, b, payoff, x, omega_init, tol, max_iter):
 
 
 def build_operator_interior(S_grid, v_grid, ds, dv, dt, r, kappa, theta, sigma, rho, Ns, Nv):
-    # build sparse FD matrix for Heston PDE (interior only)
+    # build operator matrix (just for interior points)
     N_interior = (Ns - 2) * (Nv - 2)
     rows = []
     cols = []
@@ -77,7 +77,7 @@ def build_operator_interior(S_grid, v_grid, ds, dv, dt, r, kappa, theta, sigma, 
             # mixed derivative
             a_mixed = rho * sigma * S_val * v_val / (4 * ds * dv)
 
-            # center
+            # handle time decay
             central = aS_center + aV_center - r
             A_center = 1 - dt * central
 
@@ -132,7 +132,7 @@ def build_operator_interior(S_grid, v_grid, ds, dv, dt, r, kappa, theta, sigma, 
     return A
 
 def restrict(fine):
-    # restrict fine to coarse (4-point avg)
+    # downsample with 4-point averaging
     coarse = 0.25 * (fine[0::2, 0::2] + fine[1::2, 0::2] + fine[0::2, 1::2] + fine[1::2, 1::2])
     return coarse
 
@@ -143,7 +143,7 @@ def prolong(coarse):
 
 def mg_psor_solver(A, b, payoff, x, omega, tol, max_iter, num_pre, num_post,
                    S_grid, v_grid, ds, dv, dt, r, kappa, theta, sigma, rho, Ns, Nv):
-    # handle multigrid PSOR with the existing PSOR solver
+    # multigrid step: restrict, correct, prolong
     x = psor_solver(A, b, payoff, x, omega, tol, num_pre)
     r_vec = b - A.dot(x)
     
@@ -187,7 +187,7 @@ def mg_psor_solver(A, b, payoff, x, omega, tol, max_iter, num_pre, num_post,
 
 def heston_american_fd(r, kappa, theta, sigma, rho, T, K, S_max, v_max, Ns, Nv, Nt,
                          omega=1.6, tol=1e-3, max_iter=500, use_multigrid=True, print_interval=10):
-    # solve American call under Heston using FD + PSOR + MG
+    # main loop: Heston American with FD + PSOR (+ MG if enabled)
     ds = S_max / (Ns - 1)
     dv = v_max / (Nv - 1)
     dt = T / (Nt - 1)
@@ -215,7 +215,7 @@ def heston_american_fd(r, kappa, theta, sigma, rho, T, K, S_max, v_max, Ns, Nv, 
         A = build_operator_interior(S_grid, v_grid, ds, dv, dt, r, kappa, theta, sigma, rho, Ns, Nv)
         N_interior = (Ns - 2) * (Nv - 2)
 
-        # build vectors for b (rhs), payoff, and initial guess
+        # initial b, payoff, and x
         def idx(i, j): return (j - 1) * (Ns - 2) + (i - 1)
 
         b = np.zeros(N_interior)

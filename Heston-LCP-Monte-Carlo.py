@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 
-# simulate Heston paths using full-truncation Euler
 def simulate_heston_paths(S0, v0, r, kappa, theta, sigma, rho, T, n_steps, n_paths, seed=None):
+    # simulate (S, v) paths using full-truncation Euler
     if seed is not None:
         np.random.seed(seed)
     
@@ -21,26 +21,26 @@ def simulate_heston_paths(S0, v0, r, kappa, theta, sigma, rho, T, n_steps, n_pat
         dW_S = np.sqrt(dt) * Z1
         dW_v = np.sqrt(dt) * (rho * Z1 + np.sqrt(1 - rho**2) * Z2)
         
-        # update variance using full truncation (non-negative only)
+        # update v (clamp at 0)
         v_prev = v_paths[:, t - 1]
         v_paths[:, t] = v_prev + kappa * (theta - np.maximum(v_prev, 0)) * dt \
                         + sigma * np.sqrt(np.maximum(v_prev, 0)) * dW_v
         v_paths[:, t] = np.maximum(v_paths[:, t], 0)
         
-        # update asset price using log-Euler
+        # log-Euler step for S
         S_prev = S_paths[:, t - 1]
         S_paths[:, t] = S_prev * np.exp((r - 0.5 * np.maximum(v_prev, 0)) * dt \
                                         + np.sqrt(np.maximum(v_prev, 0)) * dW_S)
     
     return S_paths, v_paths
 
-# price American call
 def american_call_price(S_paths, r, K, T):
+    # compute price via backward loop
     n_paths, n_steps_plus_one = S_paths.shape
     n_steps = n_steps_plus_one - 1
     dt = T / n_steps
     
-    # initial cashflow = payoff at maturity
+    # start with payoff at final step
     cashflow = np.maximum(S_paths[:, -1] - K, 0)
     exercise_time = np.full(n_paths, n_steps)  # init with final step (no early exercise)
     
@@ -60,7 +60,7 @@ def american_call_price(S_paths, r, K, T):
         coeff, _, _, _ = np.linalg.lstsq(X, Y, rcond=None)
         continuation_value = X.dot(coeff)
         
-        # compare payoff vs continuation; update if early exercise optimal
+        # if exercising is better, update cashflow, time
         exercise = in_the_money[immediate_payoff >= continuation_value]
         if len(exercise) > 0:
             cashflow[exercise] = immediate_payoff[np.isin(in_the_money, exercise)]
@@ -70,8 +70,8 @@ def american_call_price(S_paths, r, K, T):
     price = np.mean(cashflow * discounts)
     return price, exercise_time
 
-# wrapper: simulate + price American call under Heston
 def american_call_price_mc(S0, v0, r, kappa, theta, sigma, rho, T, K, n_steps, n_paths, seed=None):
+    # wrapper: simulate + price American call under Heston
     S_paths, _ = simulate_heston_paths(S0, v0, r, kappa, theta, sigma, rho, T, n_steps, n_paths, seed)
     price, _ = american_call_price(S_paths, r, K, T)
     return price
@@ -112,7 +112,7 @@ for i, S0 in enumerate(S_grid):
         if counter % 100 == 0:
             print(f"progress: {counter}/{total_points} grid points processed")
 
-print("monte carlo simulation complete.")
+print("Monte Carlo simulation complete.")
 
 # plot 3D price surface
 S_mesh, v_mesh = np.meshgrid(S_grid, v_grid, indexing='ij')

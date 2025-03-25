@@ -7,18 +7,18 @@ from mpl_toolkits.mplot3d import Axes3D
 from scipy.interpolate import RectBivariateSpline
 
 def heston_implicit_fd(r, kappa, theta, sigma, rho, T, K, S_max, v_max, Ns, Nv, Nt, print_interval=10):
-    # solves the heston pde for a european call option using a fully implicit finite difference scheme
+    # fully implicit FD for pricing European call (Heston)
     
     # define grid steps
     ds = S_max / (Ns - 1)
     dv = v_max / (Nv - 1)
     dt_fixed = T / (Nt - 1)  # initial guess if needed, but we'll adapt dt
     
-    # create grids for asset price and variance
+    # S and v grid
     S_grid = np.linspace(0, S_max, Ns)
     v_grid = np.linspace(0, v_max, Nv)
     
-    # set terminal condition for european call option
+    # terminal condition: payoff at maturity
     V = np.zeros((Ns, Nv))
     for i in range(Ns):
         payoff = max(S_grid[i] - K, 0)
@@ -32,7 +32,7 @@ def heston_implicit_fd(r, kappa, theta, sigma, rho, T, K, S_max, v_max, Ns, Nv, 
     current_dt = dt_fixed
     t = T
     
-    # helper function to perform a single time step with given dt and current time t
+    # one implicit step backward in time
     def single_time_step(V_in, dt, t):
         # t is the current time, dt is the step backward so that new time is t_new = t - dt
         V_new = V_in.copy()
@@ -80,7 +80,7 @@ def heston_implicit_fd(r, kappa, theta, sigma, rho, T, K, S_max, v_max, Ns, Nv, 
                 central = aS_center + aV_center - r
                 A_center = 1 - dt * central
                 
-                # fill in right-hand side vector
+                # RHS = previous time step
                 b[index] = V_in[i, j]
                 
                 # fill matrix entries and boundary adjustments
@@ -146,7 +146,7 @@ def heston_implicit_fd(r, kappa, theta, sigma, rho, T, K, S_max, v_max, Ns, Nv, 
                 cols.append(index)
                 data.append(A_center)
         
-        # assemble sparse matrix and solve
+        # build sparse matrix and solve
         A = sp.coo_matrix((data, (rows, cols)), shape=(N_interior, N_interior)).tocsr()
         x = spla.spsolve(A, b)
         

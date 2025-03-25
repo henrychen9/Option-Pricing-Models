@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
 
 class MonteCarloSimulator:
-    # initialize the simulator with parameters
     def __init__(self, S0, T, n, r, sigma, M, is_store_paths=True):
         self.S0 = S0        # initial stock price
         self.T = T          # time to maturity
@@ -17,8 +16,8 @@ class MonteCarloSimulator:
         self.final_prices = None
 
     def simulate(self):
-        # simulate stock price paths using gbm
-        Z = np.random.randn(self.M, self.n)  # standard normal shocks
+        # simulate GBM paths
+        Z = np.random.randn(self.M, self.n)  # normal random noise
 
         if self.is_store_paths:
             S = np.zeros((self.M, self.n + 1))
@@ -27,7 +26,7 @@ class MonteCarloSimulator:
             for t in range(self.n):
                 drift = (self.r - 0.5 * self.sigma**2) * self.dt
                 diffusion = self.sigma * np.sqrt(self.dt) * Z[:, t]
-                S[:, t+1] = S[:, t] * np.exp(drift + diffusion)  # update path
+                S[:, t+1] = S[:, t] * np.exp(drift + diffusion)  # move forward one step
 
             self.paths = S
             self.final_prices = S[:, -1]  # store terminal values
@@ -45,23 +44,23 @@ class MonteCarloSimulator:
             raise ValueError("run simulate() before computing expectations")
 
         empirical_mean = np.mean(self.final_prices)
-        theoretical_mean = self.S0 * np.exp(self.r * self.T)  # E[S_T] under gbm
+        theoretical_mean = self.S0 * np.exp(self.r * self.T)  # E[S_T] under GBM
 
         print(f"simulated E[S_T]: {empirical_mean:.4f}")
         print(f"theoretical E[S_T]: {theoretical_mean:.4f}")
         print(f"percent error: {100 * abs(empirical_mean - theoretical_mean) / theoretical_mean:.4f}%")
 
     def plot_paths(self, num_paths=10):
-        # plot a subset of simulated stock price paths
+        # plot a few sample paths
         if not self.is_store_paths or self.paths is None:
             raise ValueError("run simulate() with is_store_paths=True before plotting")
 
         plt.figure(figsize=(10, 5))
-        time_grid = np.linspace(0, self.T, self.n + 1)  # x-axis timeline
+        time_grid = np.linspace(0, self.T, self.n + 1)
 
         for i in range(min(num_paths, self.M)):
-            plt.plot(time_grid, self.paths[i, :], lw=1)  # draw path
-
+            plt.plot(time_grid, self.paths[i, :], lw=1)
+            
         plt.xlabel("time (years)")
         plt.ylabel("stock price")
         plt.title("monte carlo simulated price paths")

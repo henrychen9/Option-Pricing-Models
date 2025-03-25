@@ -14,7 +14,7 @@ def heston_explicit_fd(r, kappa, theta, sigma, rho, T, K, S_max, v_max, Ns, Nv, 
 
     V = np.zeros((Ns, Nv))
     for i in range(Ns):
-        V[i, :] = max(S_grid[i] - K, 0)  # call option payoff at maturity
+        V[i, :] = max(S_grid[i] - K, 0)  # initial condition: payoff at maturity
 
     total_steps = Nt - 1
     sys.stdout.write("starting explicit time-stepping...\n")
@@ -22,7 +22,7 @@ def heston_explicit_fd(r, kappa, theta, sigma, rho, T, K, S_max, v_max, Ns, Nv, 
 
     for n in range(total_steps, 0, -1):
         t = (n - 1) * dt
-        tau = T - t  # time to maturity
+        tau = T - t  # flip time axis (working backward)
 
         V_new = V.copy()
 
@@ -49,7 +49,7 @@ def heston_explicit_fd(r, kappa, theta, sigma, rho, T, K, S_max, v_max, Ns, Nv, 
                        rho * sigma * S_val * v_val * V_Sv -
                        r * V[i, j])
 
-                V_new[i, j] = V[i, j] - dt * L_V  # explicit update step
+                V_new[i, j] = V[i, j] - dt * L_V  # forward Euler step
 
         V = V_new.copy()
 
@@ -61,7 +61,7 @@ def heston_explicit_fd(r, kappa, theta, sigma, rho, T, K, S_max, v_max, Ns, Nv, 
     sys.stdout.flush()
     return S_grid, v_grid, V
 
-# set grid resolution and pde parameters
+# grid + model setup
 S_max = 200.0   # max stock price
 v_max = 0.5     # max variance
 Ns    = 50      # number of stock grid points
@@ -80,7 +80,7 @@ rho = -0.7   # correlation
 
 S_grid, v_grid, V = heston_explicit_fd(r, kappa, theta, sigma, rho, T, K, S_max, v_max, Ns, Nv, Nt, print_interval)
 
-# plot the 3d option surface
+# plot 3D surface
 S_mesh, v_mesh = np.meshgrid(S_grid, v_grid, indexing='ij')
 fig = plt.figure(figsize=(10, 7))
 ax = fig.add_subplot(111, projection='3d')
