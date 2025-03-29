@@ -1,3 +1,8 @@
+# ===================================================================================
+# WARNING: This code would not work due to instability in explicit FD implementation!
+# For reference only.
+# ===================================================================================
+
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
